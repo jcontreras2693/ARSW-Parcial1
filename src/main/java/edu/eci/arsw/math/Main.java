@@ -15,7 +15,7 @@ public class Main {
 
     public static void main(String a[]) {
         System.out.println(bytesToHex(PiDigits.getDigits(0, 10, 5)));
-        System.out.println(bytesToHex(PiDigits.getDigits(1, 100, 5)));
+        //System.out.println(bytesToHex(PiDigits.getDigits(1, 100, 5)));
         //System.out.println(bytesToHex(PiDigits.getDigits(1, 1000000, 20)));
     }
 

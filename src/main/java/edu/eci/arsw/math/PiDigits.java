@@ -15,6 +15,7 @@ public class PiDigits {
 
     private static ArrayList<PiThread> threads =  new ArrayList<PiThread>();
     private static Object lock =  new Object();
+    private static byte[] digits;
 
     
     /**
@@ -24,10 +25,7 @@ public class PiDigits {
      * @return An array containing the hexadecimal digits.
      */
     public static byte[] getDigits(int start, int count, int numThreads) {
-        for (int i = 0; i < numThreads; i++){
-            threads.add(new PiThread(start, count, Epsilon, DigitsPerSum, lock));
-            threads.get(i).start();
-        }
+
         if (start < 0) {
             throw new RuntimeException("Invalid Interval");
         }
@@ -35,88 +33,40 @@ public class PiDigits {
         if (count < 0) {
             throw new RuntimeException("Invalid Interval");
         }
+        int range;
+        if (count < numThreads){
+            range = 1;
+            for (int i = 0; i < count; i++){
+                threads.add(new PiThread(start, range, Epsilon, DigitsPerSum, lock));
+                threads.get(i).start();
+                start += range;
 
-        byte[] digits = new byte[count];
-        double sum = 0;
-
-        for (int i = 0; i < count; i++) {
-            if (i % DigitsPerSum == 0) {
-                sum = 4 * sum(1, start)
-                        - 2 * sum(4, start)
-                        - sum(5, start)
-                        - sum(6, start);
-
-                start += DigitsPerSum;
             }
-
-            sum = 16 * (sum - Math.floor(sum));
-            digits[i] = (byte) sum;
         }
-
-        return digits;
-    }
-
-    /// <summary>
-    /// Returns the sum of 16^(n - k)/(8 * k + m) from 0 to k.
-    /// </summary>
-    /// <param name="m"></param>
-    /// <param name="n"></param>
-    /// <returns></returns>
-    private static double sum(int m, int n) {
-        double sum = 0;
-        int d = m;
-        int power = n;
-
-        while (true) {
-            double term;
-
-            if (power > 0) {
-                term = (double) hexExponentModulo(power, d) / d;
-            } else {
-                term = Math.pow(16, power) / d;
-                if (term < Epsilon) {
+        else{
+            range = count / numThreads;
+            for (int i = 0; i < numThreads; i++){
+                if((count % numThreads != 0) && (i + 1 == numThreads)){
+                    threads.add(new PiThread(start, (range + count % numThreads), Epsilon, DigitsPerSum, lock));
+                    threads.get(i).start();
                     break;
                 }
+                threads.add(new PiThread(start, range, Epsilon, DigitsPerSum, lock));
+                threads.get(i).start();
+                start += range;
+            }
+        }
+        digits = new byte[count];
+        for (int i = 0; i < threads.size(); i++){
+            try{
+                PiThread thread = threads.get(i);
+                thread.join();
+                digits[i] = (byte) thread.getDigits()[i % range];
+            }catch (Exception e){
+                throw new RuntimeException(e);
             }
 
-            sum += term;
-            power--;
-            d += 8;
         }
-
-        return sum;
+        return digits;
     }
-
-    /// <summary>
-    /// Return 16^p mod m.
-    /// </summary>
-    /// <param name="p"></param>
-    /// <param name="m"></param>
-    /// <returns></returns>
-    private static int hexExponentModulo(int p, int m) {
-        int power = 1;
-        while (power * 2 <= p) {
-            power *= 2;
-        }
-
-        int result = 1;
-
-        while (power > 0) {
-            if (p >= power) {
-                result *= 16;
-                result %= m;
-                p -= power;
-            }
-
-            power /= 2;
-
-            if (power > 0) {
-                result *= result;
-                result %= m;
-            }
-        }
-
-        return result;
-    }
-
 }

@@ -1,5 +1,7 @@
 package edu.eci.arsw.math;
 
+import java.util.ArrayList;
+
 public class PiThread extends Thread{
     private int DigitsPerSum;
     private double Epsilon;
@@ -7,6 +9,7 @@ public class PiThread extends Thread{
     private int count;
     private byte[] digits;
     private Object lock;
+    private boolean keepRunning = true;
 
     public PiThread(int start, int count, double Epsilon, int DigitsPerSum, Object lock){
         this.start = start;
@@ -17,25 +20,25 @@ public class PiThread extends Thread{
     }
 
     public void run(){
-        calculate(start, count);
-    }
+        while (keepRunning){
+            //System.out.println("running");
+            digits = new byte[count];
+            double sum = 0;
 
-    private void calculate(int start, int count){
-        digits = new byte[count];
-        double sum = 0;
+            for (int i = 0; i < count; i++) {
+                if (i % DigitsPerSum == 0) {
+                    sum = 4 * sum(1, start)
+                            - 2 * sum(4, start)
+                            - sum(5, start)
+                            - sum(6, start);
 
-        for (int i = 0; i < count; i++) {
-            if (i % DigitsPerSum == 0) {
-                sum = 4 * sum(1, start)
-                        - 2 * sum(4, start)
-                        - sum(5, start)
-                        - sum(6, start);
+                    start += DigitsPerSum;
+                }
 
-                start += DigitsPerSum;
+                sum = 16 * (sum - Math.floor(sum));
+                digits[i] = (byte) sum;
             }
-
-            sum = 16 * (sum - Math.floor(sum));
-            digits[i] = (byte) sum;
+            keepRunning = false;
         }
     }
 
@@ -94,5 +97,13 @@ public class PiThread extends Thread{
         }
 
         return result;
+    }
+
+    public void stopCalculating(){
+        keepRunning = false;
+    }
+
+    public byte[] getDigits(){
+        return  digits;
     }
 }
