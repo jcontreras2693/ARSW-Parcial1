@@ -1,44 +1,36 @@
 package edu.eci.arsw.math;
 
-import java.util.ArrayList;
-
-public class PiThread extends Thread{
-    private int DigitsPerSum;
-    private double Epsilon;
+public class PiThread extends Thread {
+    private int digitsPerSum;
+    private double epsilon;
     private int start;
     private int count;
     private byte[] digits;
     private Object lock;
-    private boolean keepRunning = true;
+    private int calculated = 0;
 
-    public PiThread(int start, int count, double Epsilon, int DigitsPerSum, Object lock){
+    public PiThread(int start, int count, double epsilon, int digitsPerSum, Object lock) {
         this.start = start;
         this.count = count;
-        this.Epsilon = Epsilon;
-        this.DigitsPerSum =  DigitsPerSum;
+        this.epsilon = epsilon;
+        this.digitsPerSum = digitsPerSum;
         this.lock = lock;
     }
 
-    public void run(){
-        while (keepRunning){
-            //System.out.println("running");
-            digits = new byte[count];
-            double sum = 0;
+    @Override
+    public void run() {
+        digits = new byte[count];
+        double sum = 0;
 
-            for (int i = 0; i < count; i++) {
-                if (i % DigitsPerSum == 0) {
-                    sum = 4 * sum(1, start)
-                            - 2 * sum(4, start)
-                            - sum(5, start)
-                            - sum(6, start);
-
-                    start += DigitsPerSum;
-                }
-
-                sum = 16 * (sum - Math.floor(sum));
-                digits[i] = (byte) sum;
+        for (int i = 0; i < count; i++) {
+            if (i % digitsPerSum == 0) {
+                sum = 4 * sum(1, start) - 2 * sum(4, start) - sum(5, start) - sum(6, start);
+                start += digitsPerSum;
             }
-            keepRunning = false;
+
+            sum = 16 * (sum - Math.floor(sum));
+            digits[i] = (byte) sum;
+            calculated++;
         }
     }
 
@@ -54,7 +46,7 @@ public class PiThread extends Thread{
                 term = (double) hexExponentModulo(power, d) / d;
             } else {
                 term = Math.pow(16, power) / d;
-                if (term < Epsilon) {
+                if (term < epsilon) {
                     break;
                 }
             }
@@ -67,12 +59,6 @@ public class PiThread extends Thread{
         return sum;
     }
 
-    /// <summary>
-    /// Return 16^p mod m.
-    /// </summary>
-    /// <param name="p"></param>
-    /// <param name="m"></param>
-    /// <returns></returns>
     private int hexExponentModulo(int p, int m) {
         int power = 1;
         while (power * 2 <= p) {
@@ -83,27 +69,23 @@ public class PiThread extends Thread{
 
         while (power > 0) {
             if (p >= power) {
-                result *= 16;
-                result %= m;
+                result = (result * 16) % m;
                 p -= power;
             }
-
             power /= 2;
-
             if (power > 0) {
-                result *= result;
-                result %= m;
+                result = (result * result) % m;
             }
         }
 
         return result;
     }
 
-    public void stopCalculating(){
-        keepRunning = false;
+    public byte[] getDigits() {
+        return digits;
     }
 
-    public byte[] getDigits(){
-        return  digits;
+    public int calculatedDigits() {
+        return calculated;
     }
 }

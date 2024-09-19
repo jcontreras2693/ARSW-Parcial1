@@ -46,11 +46,13 @@ public class PiDigits {
         else{
             range = count / numThreads;
             for (int i = 0; i < numThreads; i++){
+                /*
                 if((count % numThreads != 0) && (i + 1 == numThreads)){
                     threads.add(new PiThread(start, (range + count % numThreads), Epsilon, DigitsPerSum, lock));
                     threads.get(i).start();
                     break;
                 }
+                */
                 threads.add(new PiThread(start, range, Epsilon, DigitsPerSum, lock));
                 threads.get(i).start();
                 start += range;
@@ -61,7 +63,9 @@ public class PiDigits {
             try{
                 PiThread thread = threads.get(i);
                 thread.join();
-                digits[i] = (byte) thread.getDigits()[i % range];
+                for (int j = 0; j < range; j++){
+                    digits[i] = thread.getDigits()[j];
+                }
             }catch (Exception e){
                 throw new RuntimeException(e);
             }
